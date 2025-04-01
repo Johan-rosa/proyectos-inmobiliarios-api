@@ -52,7 +52,6 @@ generate_report <- function(firebase_id) {
   temp_pdf <- tempfile(fileext = ".pdf")
   
   on.exit({
-    unlink(temp_html)
     unlink(temp_pdf)
   }, add = TRUE)
   
@@ -72,6 +71,8 @@ generate_report <- function(firebase_id) {
     return(temp_pdf)
   }, error = function(e) {
     stop("Report generation failed: ", e$message)
+  }, finally = function() {
+    unlink(temp_html)
   })
 }
 
