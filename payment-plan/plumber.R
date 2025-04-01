@@ -1,7 +1,30 @@
-#* Generate a student report for the ORExt
+library(plumber)
+
+report_dir <- "reports"
+if (!dir.exists(report_dir)) dir.create(report_dir)
+
+#* Generate or retrieve a student report for the ORExt
 #* @serializer contentType list(type="application/pdf")
 #* @get /report
 function(firebase_id) {
+  report_path <- file.path(report_dir, paste0(firebase_id, ".pdf"))
+  
+  if (file.exists(report_path)) {
+    return(readBin(report_path, "raw", n = file.info(report_path)$size))
+  }
+  
+  generate_report(firebase_id, report_path)
+}
+
+#* Overwrite an existing student report
+#* @serializer contentType list(type="application/pdf")
+#* @post /report/overwrite
+function(firebase_id) {
+  report_path <- file.path(report_dir, paste0(firebase_id, ".pdf"))
+  generate_report(firebase_id, report_path)
+}
+
+generate_report <- function(firebase_id, output_pdf) {
   temp_html <- tempfile(fileext = ".html")
   temp_pdf <- tempfile(fileext = ".pdf")
   
@@ -23,7 +46,9 @@ function(firebase_id) {
       extra_args = c("--disable-gpu", "--no-sandbox")
     )
     
-    readBin(temp_pdf, "raw", n = file.info(temp_pdf)$size) 
+    file.copy(temp_pdf, output_pdf, overwrite = TRUE)
+    
+    readBin(output_pdf, "raw", n = file.info(output_pdf)$size)
   }, error = function(e) {
     stop("Report generation failed: ", e$message)
   })
