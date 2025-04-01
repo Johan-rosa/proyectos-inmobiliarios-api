@@ -24,6 +24,16 @@ function(firebase_id) {
   generate_report(firebase_id, report_path)
 }
 
+#* Trigger report generation without downloading it
+#* @post /report/trigger
+function(firebase_id) {
+  report_path <- file.path(report_dir, paste0(firebase_id, ".pdf"))
+  
+  generate_report(firebase_id, report_path)
+  
+  list(status = "success", message = "Report generated successfully")
+}
+
 generate_report <- function(firebase_id, output_pdf) {
   temp_html <- tempfile(fileext = ".html")
   temp_pdf <- tempfile(fileext = ".pdf")
