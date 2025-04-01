@@ -34,7 +34,7 @@ RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd6
     && rm -rf /var/lib/apt/lists/*
 
 # Install R packages from CRAN
-RUN R -e "install.packages(c('glue', 'knitr', 'tidyr', 'dplyr', 'scales', 'config', 'pagedown', 'jsonlite', 'rmarkdown', 'kableExtra', 'plumber', 'box'), repos='https://cloud.r-project.org/')"
+RUN R -e "install.packages(c('aws.s3', 'glue', 'knitr', 'tidyr', 'dplyr', 'scales', 'config', 'pagedown', 'jsonlite', 'rmarkdown', 'kableExtra', 'plumber', 'box'), repos='https://cloud.r-project.org/')"
 
 # Install fireData from GitHub (separate step for easier debugging)
 RUN R -e "install.packages('remotes', repos='https://cloud.r-project.org/')"
