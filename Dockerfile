@@ -37,8 +37,8 @@ RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd6
 RUN R -e "install.packages(c('glue', 'knitr', 'tidyr', 'dplyr', 'scales', 'config', 'pagedown', 'jsonlite', 'rmarkdown', 'kableExtra', 'plumber', 'box'), repos='https://cloud.r-project.org/')"
 
 # Install fireData from GitHub (separate step for easier debugging)
-RUN R -e "install.packages('devtools', repos='https://cloud.r-project.org/')"
-RUN R -e "devtools::install_github('Kohze/fireData')"
+RUN R -e "install.packages('remotes', repos='https://cloud.r-project.org/')"
+RUN R -e "remotes::install_github('Kohze/fireData')"
 
 # Copy the application files
 COPY payment-plan/ /app/
