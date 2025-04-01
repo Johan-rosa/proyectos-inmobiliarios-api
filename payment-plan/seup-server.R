@@ -5,10 +5,13 @@ install_package_secure <- function(droplet, pkg){
   analogsea::install_r_package(droplet, pkg, repo="https://cran.rstudio.com")
 }
 
-mydrop <- "download-payment-plan"
+mydrop <- plumberDeploy::do_provision(example = FALSE)
+
+# mydrop <- "download-payment-plan"
 
 packages <- 
   c(
+    "box",
     "glue", 
     "knitr", 
     "tidyr", 
@@ -22,7 +25,6 @@ packages <-
     "devtools"
   )
 
-install_package_secure(mydrop, "devtools")
 install_package_secure(mydrop, packages)
 
 analogsea::install_github_r_package(
