@@ -1,0 +1,21 @@
+.cf-title {
+  font-size: 11px;
+}
+
+.cf-summary-section p,
+.general-summary p {
+  margin: 0;
+}
+
+.divider-right {
+  border-right: solid #dee2e6 1px;
+}
+
+table {
+  font-size: 15px !important;
+}
+
+td {
+  height: auto !important;
+}
+
