@@ -17,6 +17,12 @@ ejemplo de como correr el `report` endpoint.
 curl -o ~/Desktop/test2.pdf "http://127.0.0.1:8000/report?firebase_id=-OJxjuK1wA1NET3WvzwW"
 ```
 
+Ejemplo en Digital Ocean:
+
+```bash
+ curl -o ~/Desktop/tests.pdf "https://octopus-app-axggo.ondigitalocean.app/report?firebase_id=-OJxjuK1wA1NET3WvzwW"
+```
+
 ### Docker
 
 Hay un `Dockerfile` con las configuraciones y dependencias del sistema.
@@ -24,13 +30,13 @@ Hay un `Dockerfile` con las configuraciones y dependencias del sistema.
 Para compilar la imagen:
 
 ```bash
-docker build --platform linux/amd64 -t payment-plan-api .
+docker build -t payment-plan-api ./
 ```
 
 Para correr el contenedor:
 
 ```bash
-docker run -d -p 80:8000 -v ./.Renviron:/app/.Renviron payment-plan-api:latest
+docker run -p 8000:8000 -v ./.Renviron:/app/.Renviron payment-plan-api
 ```
 
 ### Variables
