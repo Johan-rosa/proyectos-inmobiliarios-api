@@ -10,10 +10,8 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-secrets <- config::get(file = "firebase_config.yml")
-
 plan_data <- fireData::download(
-  projectURL = secrets$firebase_db_url,
+  projectURL = Sys.getenv("FIREBASE_DB_URL"),
   fileName = glue::glue("payment_plans/{params$firebase_id}")
 )
 

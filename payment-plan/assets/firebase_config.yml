@@ -1,2 +1,0 @@
-default:
-  firebase_db_url: "https://proyectos-inmobiliarios-test-default-rtdb.firebaseio.com"
