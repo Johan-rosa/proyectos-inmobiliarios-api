@@ -8,7 +8,7 @@ eficientizar el renderizado y gestión de los planes de pago en PDF.
 ```r
 library(plumber)
 
-pr("plumber.R") %>% pr_run(port = 8000)
+pr("payment-plan/plumber.R") %>% pr_run(port = 8000)
 ```
 El  API será accesible en la siguiente dirección `http://127.0.0.1:8000`. Aquí un
 ejemplo de como correr el `report` endpoint.
