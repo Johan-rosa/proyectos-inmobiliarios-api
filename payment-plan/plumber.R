@@ -1,8 +1,7 @@
 library(plumber)
 library(aws.s3)
 
-# Set your AWS S3 bucket name
-S3_BUCKET <- "seguimiento-mr-home"
+S3_BUCKET <- Sys.getenv("AWS_S3_BUCKET")
 
 #* Generate or retrieve a student report for the ORExt
 #* @serializer contentType list(type="application/pdf")
@@ -50,10 +49,6 @@ function(firebase_id) {
 generate_report <- function(firebase_id) {
   temp_html <- tempfile(fileext = ".html")
   temp_pdf <- tempfile(fileext = ".pdf")
-  
-  on.exit({
-    unlink(temp_pdf)
-  }, add = TRUE)
   
   tryCatch({
     rmarkdown::render(
