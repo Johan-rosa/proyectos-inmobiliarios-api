@@ -6,16 +6,11 @@ output:
     theme:
       version: 5
 params:
-  firebase_id: "-OJxjuK1wA1NET3WvzwW"
+  firebase_id: "V9glC0nD8qMdNZhJgtOX"
 ---
 
 ```{r setup, include=FALSE}
-plan_data <- fireData::download(
-  projectURL = Sys.getenv("FIREBASE_DB_URL"),
-  fileName = glue::glue("payment_plans/{params$firebase_id}")
-)
-
-print(plan_data)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
 box::use(
   dplyr[bind_rows, matches, mutate, rename_with],
@@ -24,25 +19,85 @@ box::use(
   kableExtra[collapse_rows, column_spec, kable_material, kable_styling, kbl, row_spec],
   scales[comma, percent],
   tidyr[replace_na],
+  lubridate[ymd_hms],
 )
 
-precio <- plan_data$amount
+```
+
+```{r firebase_logic}
+get_firestore_document <- function(project_id, collection_name, document_id) {
+  url <- paste0(
+    "https://firestore.googleapis.com/v1/projects/",
+    project_id, "/databases/(default)/documents/",
+    collection_name, "/", document_id
+  )
+  
+  response <- httr::GET(url)
+  
+  if (httr::status_code(response) != 200) {
+    stop("Failed to retrieve the document: ", httr::content(response, "text", encoding = "UTF-8"))
+  }
+  
+  content <- httr::content(response, as = "text", encoding = "UTF-8")
+  json_data <- jsonlite::fromJSON(content, flatten = TRUE)
+  
+  return(json_data)
+}
+
+parse_firestore_data <- function(plan_data) {
+  plan_data |>
+    purrr::imap(
+      \(content, name) {
+        type <- names(content)
+  
+        if (type == "integerValue" || type == "doubleValue") return(as.numeric(unlist(content)))
+        if (type == "stringValue") return(as.character(unlist(content)))
+        if (type == "timestampValue") return(ymd_hms(unlist(content)))
+        if (type == "arrayValue") {
+          data <- dplyr::as_tibble(content$arrayValue$values) 
+          if (name == "payments") {
+            data <- setNames(data, c("id", "date", "cuota", "extra"))
+          }
+          return(data)
+        }
+        
+        return(content)
+      }
+    )
+}
+```
+
+```{r get_data}
+raw_plan_data <- get_firestore_document(
+  project_id = Sys.getenv("FIREBASE_PROJECT_ID"),
+  collection_name = "paymentPlans",
+  document_id= params$firebase_id
+)
+
+plan_data <- parse_firestore_data(raw_plan_data$fields)
+
+precio <- plan_data$price
+
 # nolint start
-reserva_firma_percent <- percent(plan_data$reserva_firma / precio, 0.1)
-en_cuotas_percent <- percent(plan_data$en_cuotas / precio, 0.1)
-contra_entrega_percent <- percent(plan_data$contra_entrega / precio, 0.1)
+reservation_signature <- plan_data$reservation + plan_data$signature
+reservation_signature_percent <- percent(plan_data$reservationSignatuerPercent / 100, 0.1)
+during_construction_percent <- percent(plan_data$duringConstructionPercent / 100, 0.1)
+at_delivery_percent <- percent(plan_data$atDeliveryPercent / 100, 0.1)
 # nolint end
 
-payments <- fromJSON(plan_data$payment_table)
-
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+payments <- plan_data$payments |>
+  dplyr::mutate(
+    date = ymd_hms(date) |> as.Date(),
+    cuota = as.numeric(cuota),
+    extra = as.numeric(extra)
+  )
 ```
 
 <!--------------------    Costumer information     -------------------->
 
 :::{#header .d-flex .justify-content-between}
 :::{#header-left}
-<spam class="fs-3 fw-semibold">Proyecto  `r plan_data$proyecto`, unidad `r plan_data$unidad` </spam>
+<spam class="fs-3 fw-semibold">Proyecto  `r plan_data$proyect`, unidad `r plan_data$unit` </spam>
 
 <spam class="fs-5"> `r plan_data$client` </spam>
 
@@ -62,7 +117,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 <div class="border rounded-1 px-3 d-flex align-items-center">`r shiny::icon("handshake", class = "fa-solid")`</div>
 ::: {.summary-details}
 <span class="cf-title">Precio de cierre</span><br>
-`r plan_data$moneda` `r comma(plan_data$amount, 0.1)`
+`r plan_data$currency` `r comma(plan_data$price, 0.1)`
 :::
 :::
 
@@ -70,7 +125,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 <div class="border rounded-1 px-3 d-flex align-items-center">`r shiny::icon("pen-nib", class = "fa-light")`</div>
 ::: {.summary-details}
 <span class="cf-title">Reserva y firma</span><br>
-`r plan_data$moneda` `r comma(plan_data$reserva_firma, 0.1)` <span class="small"> (`r reserva_firma_percent`)</span>
+`r plan_data$moneda` `r comma(reservation_signature, 0.1)` <span class="small"> (`r reservation_signature_percent`)</span>
 :::
 :::
 
@@ -78,7 +133,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 <div class="border rounded-1 px-3 d-flex align-items-center">`r shiny::icon("helmet-safety", class = "fa-solid")`</div>
 ::: {.summary-details}
 <span class="cf-title">Durante la obra</span><br>
-`r plan_data$moneda` `r comma(plan_data$en_cuotas, 0.1)` <span class="small"> (`r en_cuotas_percent`)</span>
+`r plan_data$moneda` `r comma(plan_data$duringConstruction, 0.1)` <span class="small"> (`r during_construction_percent`)</span>
 :::
 :::
 
@@ -90,7 +145,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 :::{.cf-summary-section .flex-grow-1 .text-center .divider-right}
 <span class="cf-title small">Cuota `r plan_data$frequency`</span>
 
-<span class="cf-content fw-bold">`r plan_data$moneda` `r comma(plan_data$payment, 0.1)`</span>
+<span class="cf-content fw-bold">`r plan_data$currency` `r comma(plan_data$price, 0.1)`</span>
 :::
 
 :::{.cf-summary-section .flex-grow-1 .text-center .divider-right}
@@ -102,7 +157,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 :::{.cf-summary-section .flex-grow-1 .text-center}
 <span class="cf-title small">Contra entrega</span>
 
-<span class="cf-content fw-bold">`r plan_data$moneda` `r comma(plan_data$contra_entrega, 0.1)`</span> <span class="small"> (`r contra_entrega_percent`)</span>
+<span class="cf-content fw-bold">`r plan_data$currency` `r comma(plan_data$atDelivery, 0.1)`</span> <span class="small"> (`r at_delivery_percent`)</span>
 :::
 :::
 
@@ -113,27 +168,38 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```{r render_payment_table}
 n_columns <- ncol(payments)
 
-payments <- payments |>
+payments <- plan_data$payments |>
+  dplyr::rename(Id = id, Cuota = cuota, Extra = extra, Fecha = date) |> 
   replace_na(list(Cuota = "", Extra = "")) |>
   mutate(
     Id = as.character(Id),
-    `%` = en_cuotas_percent,
-    Cuota = comma(Cuota, 0.1)
+    `%` = during_construction_percent,
+    Cuota = comma(as.numeric(Cuota), 0.1),
+    Fecha = ymd_hms(Fecha) |> as.Date(),
+    Extra = ifelse(Extra == 0, NA_integer_, Extra)
   )
+  
 
 firma_reserva_tbl <- data.frame(
   Id = c("Reserva", "Firma"),
-  Fecha = as.character(c(plan_data$fecha_reserva, plan_data$fecha_firma)),
-  Cuota = comma(c(plan_data$reserva, plan_data$firma), 0.1)
-)
+  Fecha = as.character(c(plan_data$reservationDate, plan_data$signatureDate)),
+  Cuota = comma(c(plan_data$reservation, plan_data$signature), 0.1)
+) |>
+  mutate(Fecha = ymd_hms(Fecha) |> as.Date())
 
 contra_entrega_tbl <- data.frame(
   Id = "Contra entrega",
-  Fecha = as.character(plan_data$fecha_entrega),
-  Cuota = comma(plan_data$contra_entrega, 0.1)
+  Fecha = ymd_hms(plan_data$deliveryDate) |> as.Date(),
+  Cuota = comma(plan_data$atDelivery, 0.1)
 )
 
 if ("Extra" %in% names(payments)) {
+  payments <- mutate(
+    payments, 
+    Extra = comma(Extra, 0.1),
+    Extra = ifelse(is.na(Extra), "", Extra)
+  )
+
   firma_reserva_tbl <- firma_reserva_tbl |>
     mutate(Extra = "")
 
@@ -142,10 +208,10 @@ if ("Extra" %in% names(payments)) {
 }
 
 firma_reserva_tbl <- firma_reserva_tbl |>
-  mutate(`%` = reserva_firma_percent)
+  mutate(`%` = reservation_signature_percent)
 
 contra_entrega_tbl <- contra_entrega_tbl |>
-  mutate(`%` = paste(contra_entrega_percent, " "))
+  mutate(`%` = paste(at_delivery_percent, " "))
 
 
 report_table <- firma_reserva_tbl |>
@@ -153,7 +219,7 @@ report_table <- firma_reserva_tbl |>
   bind_rows(contra_entrega_tbl)
 
 report_table |>
-  rename_with(.fn = \(name) glue("{name} ({plan_data$moneda})"), .cols = matches("Cuota|Extra")) |>
+  rename_with(.fn = \(name) glue("{name} ({plan_data$currency})"), .cols = matches("Cuota|Extra")) |>
   kbl() |>
   kable_material() |>
   row_spec(1:2, background = "#FFFBEB") |>
