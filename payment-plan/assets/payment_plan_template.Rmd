@@ -6,7 +6,7 @@ output:
     theme:
       version: 5
 params:
-  firebase_id: "V9glC0nD8qMdNZhJgtOX"
+  firebase_id: "5pAdVMUddVJcDQir42Cf"
 ---
 
 ```{r setup, include=FALSE}
@@ -198,7 +198,7 @@ contra_entrega_tbl <- data.frame(
 if ("Extra" %in% names(payments)) {
   payments <- mutate(
     payments, 
-    Extra = comma(Extra, 0.1),
+    Extra = comma(as.numeric(Extra), 0.1),
     Extra = ifelse(is.na(Extra), "", Extra)
   )
 
