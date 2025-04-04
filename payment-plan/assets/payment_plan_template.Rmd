@@ -85,6 +85,8 @@ during_construction_percent <- percent(plan_data$duringConstructionPercent / 100
 at_delivery_percent <- percent(plan_data$atDeliveryPercent / 100, 0.1)
 # nolint end
 
+ordinary_payment <- plan_data$payments$cuota[1] |> as.numeric()
+
 payments <- plan_data$payments |>
   dplyr::mutate(
     date = ymd_hms(date) |> as.Date(),
@@ -97,7 +99,7 @@ payments <- plan_data$payments |>
 
 :::{#header .d-flex .justify-content-between}
 :::{#header-left}
-<spam class="fs-3 fw-semibold">Proyecto  `r plan_data$proyect`, unidad `r plan_data$unit` </spam>
+<spam class="fs-3 fw-semibold">Proyecto  `r plan_data$project`, unidad `r plan_data$unit` </spam>
 
 <spam class="fs-5"> `r plan_data$client` </spam>
 
@@ -145,7 +147,7 @@ payments <- plan_data$payments |>
 :::{.cf-summary-section .flex-grow-1 .text-center .divider-right}
 <span class="cf-title small">Cuota `r plan_data$frequency`</span>
 
-<span class="cf-content fw-bold">`r plan_data$currency` `r comma(plan_data$price, 0.1)`</span>
+<span class="cf-content fw-bold">`r plan_data$currency` `r comma(ordinary_payment, 0.1)`</span>
 :::
 
 :::{.cf-summary-section .flex-grow-1 .text-center .divider-right}
