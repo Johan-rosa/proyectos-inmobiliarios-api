@@ -41,20 +41,12 @@ function(firebase_id) {
     return(list(status = "error", message = "Invalid firebase_id"))
   }
   
-  callr::r_bg(function(firebase_id) {
-    library(logger)
-    log_appender(appender_file("report_log.txt"))
-    tryCatch({
-      log_info("⏳ Generating report for {firebase_id}")
-      s3_path <- paste0("reports/", firebase_id, ".pdf")
-      temp_pdf <- generate_report(firebase_id)
-      upload_to_s3(temp_pdf, s3_path)
-      unlink(temp_pdf)
-      log_success("✅ Done for {firebase_id}")
-    }, error = function(e) {
-      log_error("❌ Error for {firebase_id}: {e$message}")
-    })
-  }, args = list(firebase_id))
+  callr::r_bg(
+    func = function(firebase_id) {
+      system2("Rscript", c("/app/background_job.R", firebase_id))
+    },
+    args = list(firebase_id)
+  )
   
   return(list(status = "success", message = "Report generation started"))
 }
