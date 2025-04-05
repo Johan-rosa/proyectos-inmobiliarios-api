@@ -2,6 +2,7 @@ args <- commandArgs(trailingOnly = TRUE)
 
 library(logger)
 firebase_id <- args[1]
+S3_BUCKET <- Sys.getenv("AWS_S3_BUCKET")
 
 log_appender(appender_file("report_log.txt"))
 # Function to generate the report
