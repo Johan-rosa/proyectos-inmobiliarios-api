@@ -6,7 +6,7 @@ output:
     theme:
       version: 5
 params:
-  firebase_id: "3Ixp6IRrHOBj7dZyyKhy"
+  firebase_id: "xOstBFwtkXkOsnbOe67t"
 ---
 
 ```{r setup, include=FALSE}
@@ -210,10 +210,10 @@ if ("Extra" %in% names(payments)) {
 
 
 firma_reserva_tbl <- firma_reserva_tbl |>
-  mutate(`%` = glue::glue(" {reservation_signature_percent}"))
+  mutate(`%` = glue::glue("\u200B {reservation_signature_percent}"))
 
 contra_entrega_tbl <- contra_entrega_tbl |>
-  mutate(`%` = paste(at_delivery_percent, " "))
+  mutate(`%` = paste("\u200B", at_delivery_percent))
 
 report_table <- firma_reserva_tbl |>
   bind_rows(payments) |>
