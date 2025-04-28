@@ -6,7 +6,7 @@ output:
     theme:
       version: 5
 params:
-  firebase_id: "5pAdVMUddVJcDQir42Cf"
+  firebase_id: "3Ixp6IRrHOBj7dZyyKhy"
 ---
 
 ```{r setup, include=FALSE}
@@ -99,7 +99,7 @@ payments <- plan_data$payments |>
 
 :::{#header .d-flex .justify-content-between}
 :::{#header-left}
-<spam class="fs-3 fw-semibold">Proyecto  `r plan_data$project`, unidad `r plan_data$unit` </spam>
+<spam class="fs-4 fw-semibold">Proyecto  `r plan_data$project`, unidad `r plan_data$unit` </spam>
 
 <spam class="fs-5"> `r plan_data$client` </spam>
 
@@ -181,7 +181,6 @@ payments <- plan_data$payments |>
     Extra = ifelse(Extra == 0, NA_integer_, Extra)
   )
   
-
 firma_reserva_tbl <- data.frame(
   Id = c("Reserva", "Firma"),
   Fecha = as.character(c(plan_data$reservationDate, plan_data$signatureDate)),
@@ -209,24 +208,40 @@ if ("Extra" %in% names(payments)) {
     mutate(Extra = "")
 }
 
+
 firma_reserva_tbl <- firma_reserva_tbl |>
-  mutate(`%` = reservation_signature_percent)
+  mutate(`%` = glue::glue(" {reservation_signature_percent}"))
 
 contra_entrega_tbl <- contra_entrega_tbl |>
   mutate(`%` = paste(at_delivery_percent, " "))
-
 
 report_table <- firma_reserva_tbl |>
   bind_rows(payments) |>
   bind_rows(contra_entrega_tbl)
 
+# All columns to the left and last column to the center
+alignments <- rep("l", n_columns)
+alignments <- c(alignments, "c")
+
+# Make the last column bold
+report_table[[ncol(report_table)]] <- kableExtra::cell_spec(
+  report_table[[ncol(report_table)]], 
+  bold = TRUE,
+  align = "center"
+)
+
 report_table |>
   rename_with(.fn = \(name) glue("{name} ({plan_data$currency})"), .cols = matches("Cuota|Extra")) |>
-  kbl() |>
+  kbl(align = alignments, escape = FALSE) |> 
   kable_material() |>
   row_spec(1:2, background = "#FFFBEB") |>
   row_spec(nrow(report_table), background = "#ECFDF5") |>
-  column_spec(column = n_columns + 1,  border_left = "1px solid #eeeeee", width = "10px") |>
+  column_spec(
+    column = n_columns + 1,  
+    border_left = "1px solid #eeeeee", 
+    width = "10px",
+    bold = TRUE
+   ) |>
   collapse_rows(columns = n_columns + 1, valign = "middle") |>
   kable_styling("condensed")
 ```
